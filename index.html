@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Festive Scan – A Christmas Greeting</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07101f;--panel:#0e1a2e;--line:#1f2f4a;--ink:#e8eef7;--mute:#8aa0bf;--red:#e5484d;--green:#3fb68b;--gold:#f5c451;--cyan:#59d3ff}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{background:radial-gradient(ellipse at top,#142849 0%,var(--bg) 65%) fixed;color:var(--ink);font-family:Inter,system-ui,sans-serif;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+#snow{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+main{position:relative;z-index:1;max-width:440px;margin:0 auto;min-height:100vh;padding:18px 18px 28px;display:flex;flex-direction:column}
+.top{display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--mute);letter-spacing:.08em;margin-bottom:16px}
+.dots{display:flex;gap:5px}.dots i{width:16px;height:3px;border-radius:2px;background:var(--line);transition:background .3s}.dots i.on{background:var(--gold)}
+#mute{background:none;border:1px solid var(--line);color:var(--mute);border-radius:99px;padding:5px 11px;font:inherit;cursor:pointer}
+.screen{display:none;flex-direction:column;gap:16px;flex:1}
+.screen.active{display:flex;animation:in .5s ease}
+@keyframes in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+h1{font-family:Fraunces,serif;font-weight:800;font-size:30px;line-height:1.1}
+h2{font-family:Fraunces,serif;font-weight:600;font-size:23px;line-height:1.2}
+.kicker{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;color:var(--gold);text-transform:uppercase}
+.lead{color:var(--mute);font-size:15px;line-height:1.5}
+.card{background:rgba(14,26,46,.92);border:1px solid var(--line);border-radius:16px;padding:16px;backdrop-filter:blur(4px)}
+.form{font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.45}
+.form .row{display:grid;grid-template-columns:96px 1fr;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.form .row:last-child{border:0}
+.form .k{color:var(--mute)}
+.formhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.stamp{display:inline-block;border:2px solid var(--red);color:var(--red);font:700 11px 'JetBrains Mono',monospace;padding:3px 8px;border-radius:4px;transform:rotate(-7deg);letter-spacing:.12em}
+.btn{appearance:none;border:0;background:var(--red);color:#fff;font:600 16px Inter,sans-serif;padding:15px 18px;border-radius:14px;cursor:pointer;box-shadow:0 6px 22px rgba(229,72,77,.35);transition:transform .1s,opacity .3s}
+.btn:active{transform:scale(.98)}
+.btn.green{background:var(--green);box-shadow:0 6px 22px rgba(63,182,139,.3)}
+.btn.ghost{background:transparent;border:1px solid var(--line);box-shadow:none;color:var(--ink)}
+.btn[disabled]{opacity:.3;pointer-events:none}
+.spacer{flex:1}
+.toast{min-height:44px;font-size:14px;line-height:1.4;color:var(--ink);text-align:center}
+.toast b{color:var(--gold)}
+.count{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--mute);text-align:center}
+.count b{color:var(--cyan)}
+
+/* safety screen */
+#santa{width:100%;max-width:260px;margin:0 auto;display:block}
+.metal{cursor:pointer;transform-box:fill-box;transform-origin:center;animation:pulse 1.3s ease-in-out infinite;filter:drop-shadow(0 0 6px var(--cyan));transition:transform .7s cubic-bezier(.5,-.4,.7,1),opacity .7s}
+.metal.gone{transform:translate(160px,-260px) scale(.2) rotate(200deg);opacity:0;pointer-events:none;animation:none}
+@keyframes pulse{50%{transform:scale(1.15)}}
+.badge{display:none;align-self:center;background:rgba(63,182,139,.12);border:1px solid var(--green);color:var(--green);font:600 12px 'JetBrains Mono',monospace;padding:6px 12px;border-radius:99px;letter-spacing:.06em}
+
+/* scan screen */
+#scanner{width:100%;display:block}
+#patient{transition:transform 1.6s ease-in-out}
+#patient.in{transform:translateX(200px)}
+.ring{opacity:.25}
+.scanning .ring{animation:glow .5s ease-in-out infinite alternate}
+@keyframes glow{to{opacity:1}}
+.seqs{list-style:none;font-family:'JetBrains Mono',monospace;font-size:13px}
+.seqs li{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px dashed var(--line);color:var(--mute);transition:color .3s}
+.seqs li:last-child{border:0}
+.seqs li.run{color:var(--cyan)}
+.seqs li.done{color:var(--ink)}
+.seqs li .st::before{content:'·'}
+.seqs li.run .st::before{content:'scanning…'}
+.seqs li.done .st::before{content:'✓';color:var(--green)}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--gold));transition:width .25s linear}
+.timer{display:flex;justify-content:space-between;font:12px 'JetBrains Mono',monospace;color:var(--mute);margin-top:8px}
+
+/* viewer */
+.viewer{position:relative;background:#000;border-radius:14px;overflow:hidden;border:1px solid #222}
+#mri{display:block;width:100%;height:auto;touch-action:manipulation}
+.ov{position:absolute;font:10.5px/1.35 'JetBrains Mono',monospace;color:#d8d8d8;pointer-events:none;text-shadow:0 0 3px #000}
+.ov.tl{top:8px;left:10px}.ov.tr{top:8px;right:10px;text-align:right}.ov.bl{bottom:8px;left:10px}.ov.br{bottom:8px;right:10px;text-align:right}
+.ov.side{top:50%;font-size:14px;font-weight:600;color:var(--gold)}
+.hot{pointer-events:none}
+.ann{opacity:0;transition:opacity .4s}
+.ann.show{opacity:1}
+.wl{display:flex;align-items:center;gap:12px;font:12px 'JetBrains Mono',monospace;color:var(--mute)}
+.wl input{flex:1;accent-color:var(--gold);height:28px}
+.finds{list-style:none;display:flex;flex-direction:column;gap:8px}
+.finds li{font-size:14px;line-height:1.45;padding:10px 12px;border-radius:12px;background:rgba(229,72,77,.08);border-left:3px solid var(--red);animation:in .4s ease}
+.finds li b{color:var(--gold)}
+
+/* report */
+#report{font:12.5px/1.6 'JetBrains Mono',monospace;white-space:pre-wrap;color:#dfe8f5;min-height:330px}
+#report .h{color:var(--gold)}
+.sig{display:none;font-family:Fraunces,serif;font-size:20px;color:var(--gold);transform:rotate(-3deg);margin-top:6px}
+
+/* final */
+.final{align-items:center;text-align:center;justify-content:center}
+.final h1{font-size:40px;background:linear-gradient(90deg,var(--gold),#fff 50%,var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent;background-size:200% 100%;animation:shine 4s linear infinite}
+@keyframes shine{to{background-position:-200% 0}}
+.final .msg{font-size:16px;line-height:1.6;color:var(--ink);max-width:360px}
+.final .from{font-family:Fraunces,serif;font-size:20px;color:var(--gold)}
+.final .ps{font-size:13px;color:var(--mute);max-width:330px;line-height:1.5}
+.btnrow{display:flex;gap:10px;width:100%}
+.btnrow .btn{flex:1;font-size:14px;padding:13px}
+#orn{width:120px;animation:swing 3s ease-in-out infinite;transform-origin:50% 0}
+@keyframes swing{50%{transform:rotate(6deg)}0%,100%{transform:rotate(-6deg)}}
+.tap{font-size:12px;color:var(--mute);text-align:center;font-family:'JetBrains Mono',monospace}
+.link{background:none;border:0;color:var(--cyan);font:600 13px Inter,sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:4px}
+#editor{display:none;position:fixed;inset:0;z-index:5;background:rgba(4,9,18,.9);backdrop-filter:blur(6px);overflow:auto;padding:18px}
+#editor.open{display:block}
+.ed{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.ed label{display:flex;flex-direction:column;gap:6px;font:600 12px 'JetBrains Mono',monospace;color:var(--mute);letter-spacing:.06em;text-transform:uppercase}
+.ed input,.ed textarea{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:12px;color:var(--ink);font:15px Inter,sans-serif;padding:12px 14px;outline:none}
+.ed input:focus,.ed textarea:focus{border-color:var(--gold)}
+.ed textarea{min-height:120px;resize:vertical;line-height:1.5}
+.ed .hint{font-size:12px;color:var(--mute);line-height:1.45}
+#outbox{display:none;flex-direction:column;gap:10px}
+#outbox.show{display:flex}
+#urlbox{font:12px 'JetBrains Mono',monospace;word-break:break-all;background:var(--panel);border:1px dashed var(--line);border-radius:12px;padding:12px;color:var(--cyan);max-height:110px;overflow:auto;user-select:all;-webkit-user-select:all}
+.wa{display:block;text-align:center;background:#25d366;color:#062b16;font:600 15px Inter,sans-serif;padding:14px;border-radius:14px;text-decoration:none}
+</style>
+</head>
+<body>
+<canvas id="snow"></canvas>
+<main>
+  <div class="top">
+    <div class="dots" id="dots"><i></i><i></i><i></i><i></i></div>
+    <button id="mute" aria-label="Toggle sound">🔊 Sound on</button>
+  </div>
+
+  <!-- 1 REFERRAL -->
+  <section class="screen active" id="s1">
+    <div class="kicker">📟 1 urgent referral</div>
+    <h1>A very special patient is waiting for you.</h1>
+    <p class="lead" id="hello">Season's greetings! Before the festivities begin, we need your help with one last scan of the year.</p>
+    <div class="card form">
+      <div class="formhead"><span class="kicker" style="color:var(--mute)">MRI Request Form</span><span class="stamp">URGENT</span></div>
+      <div class="row"><span class="k">Patient</span><span>CLAUS, Santa (Mr)</span></div>
+      <div class="row"><span class="k">Age</span><span>1,753 years</span></div>
+      <div class="row"><span class="k">Referred by</span><span>Mrs Claus</span></div>
+      <div class="row"><span class="k">History</span><span>Recurrent "ho ho ho". Back strain after 2.1 billion chimneys. ?Cookie overload.</span></div>
+      <div class="row"><span class="k">Exam</span><span>MRI Whole Body – Festive Protocol</span></div>
+      <div class="row"><span class="k">Needed by</span><span>24 Dec 2026</span></div>
+      <div class="row"><span class="k">Scanned by</span><span id="scannedBy">You</span></div>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn" id="b1">Accept referral 🎅</button>
+    <button class="link" id="edit1">✏️ Personalise this card &amp; get your WhatsApp link</button>
+  </section>
+
+  <!-- 2 SAFETY -->
+  <section class="screen" id="s2">
+    <div class="kicker">Step 1 · MRI safety screening</div>
+    <h2>Santa is not MR safe… yet. Tap each of the 3 glowing metal objects to remove them.</h2>
+    <svg id="santa" viewBox="0 0 240 310" aria-label="Santa with metal objects">
+      <!-- boots -->
+      <rect x="70" y="268" width="42" height="26" rx="10" fill="#1b1b1f"/>
+      <rect x="128" y="268" width="42" height="26" rx="10" fill="#1b1b1f"/>
+      <!-- arms -->
+      <ellipse cx="52" cy="210" rx="20" ry="44" fill="#c9302c" transform="rotate(18 52 210)"/>
+      <ellipse cx="188" cy="210" rx="20" ry="44" fill="#c9302c" transform="rotate(-18 188 210)"/>
+      <circle cx="40" cy="250" r="14" fill="#1f6f4a"/>
+      <circle cx="200" cy="250" r="14" fill="#1f6f4a"/>
+      <!-- body -->
+      <ellipse cx="120" cy="215" rx="70" ry="66" fill="#d7372f"/>
+      <rect x="111" y="152" width="18" height="128" fill="#f3f3f3"/>
+      <rect x="51" y="214" width="138" height="18" fill="#1b1b1f"/>
+      <!-- beard -->
+      <path d="M78 122 C70 175 100 200 120 200 C140 200 170 175 162 122 Z" fill="#f7f7f7"/>
+      <!-- face -->
+      <circle cx="120" cy="118" r="32" fill="#f6c9a8"/>
+      <circle cx="108" cy="112" r="3.5" fill="#222"/><circle cx="132" cy="112" r="3.5" fill="#222"/>
+      <circle cx="101" cy="124" r="6" fill="#f19a8f" opacity=".6"/><circle cx="139" cy="124" r="6" fill="#f19a8f" opacity=".6"/>
+      <circle cx="120" cy="123" r="6" fill="#ec8f7d"/>
+      <path d="M96 140 Q108 132 120 140 Q132 132 144 140 Q132 150 120 143 Q108 150 96 140Z" fill="#fff"/>
+      <!-- hat -->
+      <path d="M84 96 C88 60 120 30 182 34 C160 48 158 70 156 96 Z" fill="#d7372f"/>
+      <rect x="78" y="88" width="84" height="18" rx="9" fill="#f3f3f3"/>
+      <!-- METAL: bell -->
+      <g class="metal" data-i="0">
+        <circle cx="186" cy="36" r="16" fill="transparent"/>
+        <path d="M176 44 C176 30 180 24 186 24 C192 24 196 30 196 44 Z" fill="#f5c451" stroke="#b8891f" stroke-width="1.5"/>
+        <rect x="174" y="43" width="24" height="4" rx="2" fill="#b8891f"/>
+        <circle cx="186" cy="49" r="3" fill="#b8891f"/>
+      </g>
+      <!-- METAL: buckle -->
+      <g class="metal" data-i="1">
+        <rect x="102" y="208" width="36" height="30" rx="4" fill="#f5c451" stroke="#b8891f" stroke-width="2"/>
+        <rect x="110" y="215" width="20" height="16" rx="2" fill="#1b1b1f"/>
+      </g>
+      <!-- METAL: keys -->
+      <g class="metal" data-i="2">
+        <circle cx="212" cy="270" r="18" fill="transparent"/>
+        <circle cx="206" cy="264" r="8" fill="none" stroke="#c5ced9" stroke-width="3"/>
+        <path d="M212 268 L226 282 M220 276 L224 272 M224 280 L228 276" stroke="#c5ced9" stroke-width="3.5" stroke-linecap="round"/>
+      </g>
+    </svg>
+    <div class="count">Metal removed: <b id="mcount">0</b>/3</div>
+    <div class="toast" id="toast">The magnet is always on. Three ferromagnetic items detected — tap them.</div>
+    <div class="badge" id="clear">✓ CLEARED FOR ZONE IV</div>
+    <div class="spacer"></div>
+    <button class="btn" id="b2" disabled>Position patient in the scanner</button>
+  </section>
+
+  <!-- 3 SCAN -->
+  <section class="screen" id="s3">
+    <div class="kicker">Step 2 · Acquisition</div>
+    <h2 id="scanTitle">Patient is head first, supine and very jolly. Starting scan…</h2>
+    <svg id="scanner" viewBox="0 0 400 210" aria-label="MRI scanner">
+      <circle cx="280" cy="100" r="60" fill="#0a1322"/>
+      <rect x="0" y="150" width="400" height="12" rx="4" fill="#8193ab"/>
+      <rect x="40" y="162" width="14" height="40" fill="#5b6b82"/>
+      <g id="patient">
+        <rect x="30" y="128" width="12" height="16" rx="4" fill="#1b1b1f"/>
+        <ellipse cx="78" cy="138" rx="38" ry="13" fill="#d7372f"/>
+        <rect x="72" y="125" width="6" height="26" fill="#1b1b1f"/>
+        <circle cx="126" cy="133" r="11" fill="#f6c9a8"/>
+        <ellipse cx="124" cy="143" rx="10" ry="6" fill="#fff"/>
+        <polygon points="134,124 158,131 134,140" fill="#d7372f"/>
+        <circle cx="158" cy="131" r="4" fill="#fff"/>
+      </g>
+      <path fill="#dfe6ef" fill-rule="evenodd" d="M220 20 H340 A40 40 0 0 1 380 60 V140 A40 40 0 0 1 340 180 H220 A40 40 0 0 1 180 140 V60 A40 40 0 0 1 220 20 Z M220 100 a60 60 0 1 0 120 0 a60 60 0 1 0 -120 0 Z"/>
+      <circle class="ring" cx="280" cy="100" r="60" fill="none" stroke="#59d3ff" stroke-width="4"/>
+      <text x="280" y="196" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#8aa0bf">FESTIVE 1.5T</text>
+      <circle cx="356" cy="40" r="4" fill="#3fb68b"/>
+    </svg>
+    <div class="card">
+      <ul class="seqs" id="seqs">
+        <li><span>Localiser</span><span class="st"></span></li>
+        <li><span>T1 Gingerbread</span><span class="st"></span></li>
+        <li><span>T2 Tinsel-weighted</span><span class="st"></span></li>
+        <li><span>DWI – Diffusion Weighted Ice</span><span class="st"></span></li>
+        <li><span>Jingle Echo (GRE)</span><span class="st"></span></li>
+      </ul>
+      <div class="bar" style="margin-top:10px"><i id="bar"></i></div>
+      <div class="timer"><span id="seqName">Ready</span><span id="remain">00:00</span></div>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn" id="b3">▶ Start scan</button>
+  </section>
+
+  <!-- 6 FINAL -->
+  <section class="screen final" id="s6">
+    <svg id="orn" viewBox="0 0 120 140" aria-hidden="true">
+      <line x1="60" y1="0" x2="60" y2="22" stroke="#8aa0bf" stroke-width="2"/>
+      <rect x="50" y="20" width="20" height="12" rx="3" fill="#f5c451"/>
+      <circle cx="60" cy="82" r="50" fill="#e5484d"/>
+      <circle cx="60" cy="82" r="50" fill="none" stroke="#fff" stroke-opacity=".15" stroke-width="8"/>
+      <circle cx="60" cy="82" r="30" fill="none" stroke="#f5c451" stroke-width="3"/>
+      <circle cx="60" cy="82" r="16" fill="none" stroke="#f5c451" stroke-width="3" stroke-dasharray="4 4"/>
+      <circle cx="44" cy="62" r="7" fill="#fff" opacity=".35"/>
+    </svg>
+    <div class="kicker">Scan complete · No artefacts detected</div>
+    <h1 id="merry">Merry Christmas!</h1>
+    <p class="msg">Wishing you a Christmas full of warmth, laughter and the people who matter most — good food on the table, rest for the body and joy for the heart. May 2027 bring you good health, happy moments and only good findings.</p>
+    <p class="from" id="from"></p>
+    <p class="ps">P.S. Snow in Singapore? Only here, and in our scan room at 18°C. ❄️</p>
+    <div class="btnrow">
+      <button class="btn ghost" id="carol">🎵 Music: on</button>
+      <button class="btn" id="again">↺ Scan again</button>
+    </div>
+    <button class="link" id="edit6">✏️ Edit the sign-off &amp; wishes</button>
+  </section>
+</main>
+
+<!-- PERSONALISE PANEL -->
+<div id="editor" role="dialog" aria-label="Personalise the card">
+  <div class="ed">
+    <div class="kicker">✏️ Personalise</div>
+    <h2>Make it yours, then share the link.</h2>
+    <label>Recipient's name (optional)<input id="eTo" maxlength="40" placeholder="e.g. Sarah, or leave blank"></label>
+    <label>Sign-off (your name)<input id="eFrom" maxlength="40" placeholder="e.g. Q, or The MRI Team"></label>
+    <label>Warm wishes message<textarea id="eMsg" maxlength="320"></textarea></label>
+    <p class="hint">Your edits are baked into the link below, so each recipient sees exactly what you wrote here. Nothing is saved anywhere else.</p>
+    <button class="btn green" id="eMake">Create my link</button>
+    <div id="outbox">
+      <div id="urlbox"></div>
+      <div class="btnrow">
+        <button class="btn ghost" id="eCopy">📋 Copy link</button>
+        <button class="btn ghost" id="ePreview">👀 Preview</button>
+      </div>
+      <a class="wa" id="eWa" href="#">Share via WhatsApp</a>
+    </div>
+    <button class="link" id="eClose">Close</button>
+  </div>
+</div>
+
+<script>
+/* ===== Defaults (editable in the card via "Personalise") ===== */
+const DEFAULT_FROM = "Q";
+const DEFAULT_MSG  = "Wishing you a Christmas full of warmth, laughter and the people who matter most — good food on the table, rest for the body and joy for the heart. May 2027 bring you good health, happy moments and only good findings.";
+
+const $ = s => document.querySelector(s);
+/* Link payload: #c-<hex of UTF-8 JSON {to,from,msg}>, or legacy #Name */
+const enc = o => 'c-' + Array.from(new TextEncoder().encode(JSON.stringify(o))).map(b=>b.toString(16).padStart(2,'0')).join('');
+const dec = h => { try{ const b = new Uint8Array(h.match(/../g).map(x=>parseInt(x,16))); return JSON.parse(new TextDecoder().decode(b)); }catch(e){ return null; } };
+const raw = (location.hash || '').slice(1).replace(/[^A-Za-z0-9-]/g,'');
+let NAME = '', FROM = DEFAULT_FROM, MSG = DEFAULT_MSG;
+if (raw.startsWith('c-')) {
+  const o = dec(raw.slice(2)) || {};
+  NAME = (o.to||'').trim().slice(0,40); FROM = (o.from||'').trim().slice(0,40) || DEFAULT_FROM; MSG = (o.msg||'').trim().slice(0,320) || DEFAULT_MSG;
+} else if (raw) {
+  NAME = raw.split('-').filter(Boolean).map(w => w[0].toUpperCase()+w.slice(1)).join(' ');
+}
+function applyText(){
+  $('#hello').textContent = NAME
+    ? `Season's greetings, ${NAME}! Before the festivities begin, we need your help with one last scan of the year.`
+    : `Season's greetings! Before the festivities begin, we need your help with one last scan of the year.`;
+  $('#scannedBy').textContent = NAME || 'You';
+  $('#merry').textContent = NAME ? `Merry Christmas, ${NAME}!` : 'Merry Christmas!';
+  $('#from').textContent = `With warm wishes, ${FROM}`;
+  $('.final .msg').textContent = MSG;
+}
+applyText();
+
+/* ===== Personalise panel ===== */
+const ed = $('#editor');
+function openEditor(){ $('#eTo').value = NAME; $('#eFrom').value = FROM; $('#eMsg').value = MSG; $('#outbox').classList.remove('show'); ed.classList.add('open'); }
+$('#edit1').onclick = openEditor; $('#edit6').onclick = openEditor;
+$('#eClose').onclick = () => ed.classList.remove('open');
+let madeUrl = '';
+$('#eMake').onclick = () => {
+  const o = { to: $('#eTo').value.trim(), from: $('#eFrom').value.trim() || DEFAULT_FROM, msg: $('#eMsg').value.trim() || DEFAULT_MSG };
+  madeUrl = location.origin + location.pathname + '#' + enc(o);
+  $('#urlbox').textContent = madeUrl;
+  const greet = o.to ? `${o.to}, a very special patient needs your help 🎅🧲 ` : `A very special patient needs your help 🎅🧲 `;
+  $('#eWa').href = 'https://wa.me/?text=' + encodeURIComponent(greet + madeUrl);
+  $('#outbox').classList.add('show');
+  $('#eCopy').textContent = '📋 Copy link';
+};
+$('#eCopy').onclick = () => {
+  navigator.clipboard.writeText(madeUrl).then(()=>{ $('#eCopy').textContent = '✓ Copied'; })
+    .catch(()=>{ const r=document.createRange(); r.selectNodeContents($('#urlbox')); const s=getSelection(); s.removeAllRanges(); s.addRange(r); $('#eCopy').textContent = 'Selected — long-press to copy'; });
+};
+$('#ePreview').onclick = () => { location.href = madeUrl; location.reload(); };
+
+/* ===== Navigation ===== */
+let cur = 1;
+function go(n){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $('#s'+n).classList.add('active');
+  const step = n>4 ? 4 : n; document.querySelectorAll('#dots i').forEach((d,i) => d.classList.toggle('on', i < step));
+  cur = n; window.scrollTo({top:0, behavior:'smooth'});
+}
+go(1);
+
+/* ===== Audio (Web Audio, no files) ===== */
+let ctx = null, master = null, muted = false;
+function audio(){
+  try{
+    if(!ctx){ ctx = new (window.AudioContext||window.webkitAudioContext)(); master = ctx.createGain(); master.gain.value = muted?0:.16; master.connect(ctx.destination); }
+    if(ctx.state === 'suspended') ctx.resume().catch(()=>{});
+  }catch(e){ ctx = null; }
+}
+function tone(f, t, d, type='square', v=1){
+  if(!ctx) return;
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = type; o.frequency.value = f;
+  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t+.006); g.gain.exponentialRampToValueAtTime(.0001, t+d);
+  o.connect(g); g.connect(master); o.start(t); o.stop(t+d+.03);
+}
+$('#mute').onclick = () => {
+  muted = !muted;
+  $('#mute').textContent = muted ? '🔇 Sound off' : '🔊 Sound on';
+  if(master) master.gain.value = muted ? 0 : .16;
+  if(!muted && cur > 1) bgmStart();
+};
+document.addEventListener('visibilitychange', () => { if(ctx && document.visibilityState === 'visible') ctx.resume().catch(()=>{}); });
+function chime(){ audio(); if(!ctx) return; const t=ctx.currentTime; [1318,1760,2093].forEach((f,i)=>tone(f,t+i*.08,.5,'sine',.5)); }
+
+/* MRI-style knocking pattern for a given duration */
+function knock(pattern, dur){
+  if(!ctx) return;
+  const t0 = ctx.currentTime + .05;
+  for(let t=0; t<dur; t+=pattern.gap){
+    pattern.hits.forEach((h,i) => tone(pattern.f*(h||1), t0+t+i*pattern.sub, pattern.len, 'square', .55));
+  }
+}
+const JB = [[659,1],[659,1],[659,2],[659,1],[659,1],[659,2],[659,1],[784,1],[523,1.5],[587,.5],[659,4],
+            [698,1],[698,1],[698,1.5],[698,.5],[698,1],[659,1],[659,1],[659,.5],[659,.5],[784,1],[784,1],[698,1],[587,1],[523,4]];
+const BEAT = .21;
+const JB_DUR = JB.reduce((a,n)=>a+n[1],0)*BEAT;
+/* Deck the Halls (first phrase) and We Wish You a Merry Christmas — traditional carols, public domain */
+const DH = [[784,1.5],[698,.5],[659,1],[587,1],[523,1],[587,1],[659,1],[523,1],[587,.5],[659,.5],[698,.5],[587,.5],[659,1.5],[587,.5],[523,1],[494,1],[523,2],[0,1]];
+const WW = [[587,1],[784,1],[784,.5],[880,.5],[784,.5],[698,.5],[659,1],[659,1],[659,1],[880,1],[880,.5],[988,.5],[880,.5],[784,.5],[698,1],[587,1],[587,1],[988,1],[988,.5],[1046,.5],[988,.5],[880,.5],[784,1],[659,1],[587,.5],[587,.5],[659,1],[880,1],[698,1],[784,2],[0,1]];
+const MEDLEY = [...JB,[0,1],...DH,...WW];
+/* Background music: looping scheduler on its own gain so it can be ducked */
+let bgmGain = null, bgmOn = false, bgmIdx = 0, bgmNext = 0, bgmTimer = null;
+function bgmNote(f, t, d){
+  if(!f) return;
+  const mk = (type, freq, vol, len) => { const o=ctx.createOscillator(), g=ctx.createGain(); o.type=type; o.frequency.value=freq;
+    g.gain.setValueAtTime(.0001,t); g.gain.linearRampToValueAtTime(vol,t+.01); g.gain.exponentialRampToValueAtTime(.0001,t+len);
+    o.connect(g); g.connect(bgmGain); o.start(t); o.stop(t+len+.03); };
+  mk('square', f, .28, d*.9); mk('triangle', f/2, .22, d*.6);
+}
+function bgmStart(){
+  audio(); if(!ctx || bgmOn) return;
+  if(!bgmGain){ bgmGain = ctx.createGain(); bgmGain.gain.value = .55; bgmGain.connect(master); }
+  bgmOn = true; bgmNext = ctx.currentTime + .1;
+  bgmTimer = setInterval(()=>{
+    while(bgmNext < ctx.currentTime + .6){
+      const [f,b] = MEDLEY[bgmIdx]; bgmNote(f, bgmNext, b*BEAT);
+      bgmNext += b*BEAT; bgmIdx = (bgmIdx+1) % MEDLEY.length;
+    }
+  }, 150);
+  updateMusicBtn();
+}
+function bgmStop(){ bgmOn = false; clearInterval(bgmTimer); updateMusicBtn(); }
+function bgmDuck(on){ if(bgmGain) bgmGain.gain.setTargetAtTime(on ? .18 : .55, ctx.currentTime, .3); }
+function updateMusicBtn(){ const b = $('#carol'); if(b) b.textContent = bgmOn ? '🎵 Music: on' : '🎵 Music: off'; }
+function carol(){ bgmOn ? bgmStop() : bgmStart(); }
+
+/* ===== Screen 1 ===== */
+$('#b1').onclick = () => { chime(); bgmStart(); go(2); };
+
+/* ===== Screen 2: safety ===== */
+const metalMsgs = [
+  "<b>Jingle bell removed.</b> Very jingly, very ferromagnetic.",
+  "<b>Belt buckle off.</b> A 1.5T magnet is about 30,000× Earth's field. The magnet would win.",
+  "<b>Sleigh keys in the locker.</b> Rudolph can wait outside."
+];
+let removed = 0;
+document.querySelectorAll('.metal').forEach(m => m.addEventListener('click', e => {
+  e.stopPropagation();
+  if(m.classList.contains('gone')) return;
+  audio(); if(ctx){ const t=ctx.currentTime; tone(880,t,.12,'triangle',.5); tone(1320,t+.08,.2,'triangle',.4); }
+  m.classList.add('gone'); removed++;
+  $('#mcount').textContent = removed;
+  $('#toast').innerHTML = metalMsgs[+m.dataset.i];
+  if(removed === 3){
+    setTimeout(()=>{ $('#clear').style.display='block'; $('#toast').innerHTML='Santa is screened and safe. Ear plugs in, call bell in hand. Positioning…'; chime(); }, 600);
+    setTimeout(()=>{ go(3); setTimeout(()=>$('#patient').classList.add('in'), 200); setTimeout(startScan, 1200); }, 2000);
+  }
+}));
+$('#b2').style.display = 'none';
+
+/* ===== Screen 3: scan ===== */
+const SEQS = [
+  {d:1.2, p:{f:330, gap:.32, sub:0, len:.05, hits:[1]}},
+  {d:1.6, p:{f:900, gap:.16, sub:.05, len:.03, hits:[1,1]}},
+  {d:1.6, p:{f:520, gap:.45, sub:.07, len:.05, hits:[1,1.2,1]}},
+  {d:1.4, p:{f:1400,gap:.06, sub:0, len:.035, hits:[1]}},
+  {d:2.4, p:{f:260, gap:.42, sub:.21, len:.07, hits:[1,1.5]}}
+];
+const TOTAL = SEQS.reduce((a,s)=>a+s.d,0);
+let scanning = false;
+$('#b3').style.display = 'none';
+function startScan(){
+  if(scanning) return; scanning = true; audio();
+  $('#scanner').classList.add('scanning'); bgmDuck(true);
+  $('#scanTitle').textContent = 'Shh… scanning. (Yes, it is always this loud.)';
+  const lis = document.querySelectorAll('#seqs li');
+  const start = performance.now();
+  let i = 0, segStart = 0;
+  function runSeq(){
+    if(i>0) lis[i-1].className = 'done';
+    if(i === SEQS.length){ finish(); return; }
+    lis[i].className = 'run';
+    $('#seqName').textContent = lis[i].firstElementChild.textContent;
+    knock(SEQS[i].p, SEQS[i].d);
+    const d = SEQS[i].d; i++;
+    setTimeout(runSeq, d*1000);
+  }
+  const tick = setInterval(()=>{
+    const el = (performance.now()-start)/1000;
+    const r = Math.max(0, TOTAL-el);
+    $('#bar').style.width = Math.min(100, el/TOTAL*100) + '%';
+    $('#remain').textContent = '00:' + String(Math.ceil(r)).padStart(2,'0');
+    if(r<=0) clearInterval(tick);
+  }, 100);
+  function finish(){
+    $('#scanner').classList.remove('scanning'); bgmDuck(false);
+    $('#seqName').textContent = 'Complete';
+    $('#scanTitle').textContent = 'All sequences done. Santa kept perfectly still (a first). No artefacts!';
+    setTimeout(finale, 1400);
+  }
+  runSeq();
+}
+
+/* ===== Finale ===== */
+function finale(){ go(6); snowTarget = 220; bgmStart(); if(bgmGain) bgmGain.gain.setTargetAtTime(.8, ctx.currentTime, .5); }
+
+/* ===== Screen 6 ===== */
+$('#carol').onclick = carol;
+$('#again').onclick = () => location.reload();
+
+/* ===== Snow ===== */
+const cv = $('#snow'), c2 = cv.getContext('2d');
+let W, H, flakes = [], snowTarget = 70, dpr = Math.min(2, window.devicePixelRatio||1);
+function resize(){ W = cv.width = innerWidth*dpr; H = cv.height = innerHeight*dpr; }
+addEventListener('resize', resize); resize();
+const mk = top => ({x:Math.random()*W, y: top ? -10 : Math.random()*H, r:(Math.random()*2.2+.8)*dpr, s:(Math.random()*.7+.3)*dpr, p:Math.random()*6.28});
+for(let i=0;i<snowTarget;i++) flakes.push(mk(false));
+(function loop(){
+  c2.clearRect(0,0,W,H);
+  if(flakes.length < snowTarget) for(let k=0;k<3;k++) flakes.push(mk(true));
+  c2.fillStyle = 'rgba(255,255,255,.85)';
+  for(const f of flakes){
+    f.y += f.s; f.p += .02; f.x += Math.sin(f.p)*.4*dpr;
+    if(f.y > H+5){ f.y = -5; f.x = Math.random()*W; }
+    c2.beginPath(); c2.arc(f.x, f.y, f.r, 0, 6.28); c2.fill();
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
